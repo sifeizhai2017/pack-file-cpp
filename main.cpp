@@ -313,7 +313,7 @@ public:
     void unpackFiles(char *packPath, char *unpackPath, int index);
 
 //    提取解包文件中的重复代码
-    void unpackSpecificFile();
+    void unpackSpecificFile(File file, FILE *packPointer, char *unpackPath, int i);
 
 //    创建文件夹
     void createFolder(char *folderName);
@@ -414,23 +414,7 @@ void PackManager::unpackFiles(char *packPath, char *unpackPath) {
     fread(&fileNumFromPack, sizeof(int), 1, pIobuf);
     cout << "可以读到文件个数：" << fileNumFromPack << endl;
     while (i <= fileNumFromPack) {
-        unpackSpecificFile(file, pIobuf, unpackPath);
-//        读出一段结构体
-        fread(&file, sizeof(File), 1, pIobuf);
-//        拼接出解包的路径
-        strcpy(file.filePath, unpackPath);
-        strcat(file.filePath, file.fileName);
-//        在新路径新建文件
-        cout << file.filePath << "-----" << endl;
-        fq = fopen(file.filePath, "wb");
-        char *buffer = (char *) malloc(file.size);
-//        移到偏移处
-        fseek(pIobuf, file.fileOffset, SEEK_SET);
-        fread(buffer, file.size, 1, pIobuf);
-        fwrite(buffer, file.size, 1, fq);
-        fclose(fq);
-//        移到下一个写进去的结构体处
-        fseek(pIobuf, sizeof(int) + i * sizeof(file), SEEK_SET);
+        this->unpackSpecificFile(file, pIobuf, unpackPath, i);
         ++i;
     }
 }
@@ -438,38 +422,25 @@ void PackManager::unpackFiles(char *packPath, char *unpackPath) {
 void PackManager::unpackFiles(char *packPath, char *unpackPath, int index) {
     int i = 0, fileNumFromPack;
 //    包指针
-    FILE *fp, *fq;
+    FILE *pIobuf, *fq;
 //    文件类型结构体
-    struct File tempFile;
+    File file;
 
-//     文件夹不存在则创建文件夹
+//    文件夹不存在则创建文件夹
     createFolder(unpackPath);
 //    打开包
-    fp = fopen(packPath, "rb");
-    if (!fp) {
+    pIobuf = fopen(packPath, "rb");
+    if (!pIobuf) {
         printf("包打开失败");
     }
-    fread(&fileNumFromPack, sizeof(int), 1, fp);
+    fread(&fileNumFromPack, sizeof(int), 1, pIobuf);
     while (i <= fileNumFromPack) {
         if (i == index) {
-//            读出一段结构体
-            fread(&tempFile, sizeof(File), 1, fp);
-//            拼接出解包的路径
-            strcpy(tempFile.filePath, unpackPath);
-            strcat(tempFile.filePath, tempFile.fileName);
-//            在新路径新建文件
-            fq = fopen(tempFile.filePath, "wb");
-//            缓冲区
-            char *buffer = (char *) malloc(tempFile.size);
-//            移到偏移处
-            fseek(fp, tempFile.fileOffset, SEEK_SET);
-            fread(buffer, tempFile.size, 1, fp);
-            fwrite(buffer, tempFile.size, 1, fq);
-            fclose(fq);
+            this->unpackSpecificFile(file, pIobuf, unpackPath, i);
             ++i;
         } else {
 //            移到下一个写进去的结构体处
-            fseek(fp, sizeof(fileNum) + i * sizeof(tempFile), SEEK_SET);
+            fseek(pIobuf, sizeof(fileNum) + i * sizeof(file), SEEK_SET);
             ++i;
         }
     }
@@ -479,6 +450,25 @@ void PackManager::createFolder(char *folderName) {
     if (_access(folderName, 0) == -1) {
         _mkdir(folderName);
     }
+}
+
+void PackManager::unpackSpecificFile(File file, FILE *packPointer, char *unpackPath, int i) {
+//    读出一段结构体
+    fread(&file, sizeof(File), 1, packPointer);
+//    拼接出解包的路径
+    strcpy(file.filePath, unpackPath);
+    strcat(file.filePath, file.fileName);
+//    在新路径新建文件
+    cout << file.filePath << "-----" << endl;
+    FILE *fq = fopen(file.filePath, "wb");
+    char *buffer = (char *) malloc(file.size);
+//    移到偏移处
+    fseek(packPointer, file.fileOffset, SEEK_SET);
+    fread(buffer, file.size, 1, packPointer);
+    fwrite(buffer, file.size, 1, fq);
+    fclose(fq);
+//    移到下一个写进去的结构体处
+    fseek(packPointer, sizeof(int) + i * sizeof(file), SEEK_SET);
 }
 
 int main() {

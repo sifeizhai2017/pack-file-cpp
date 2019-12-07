@@ -427,57 +427,69 @@ inline void PackManager::unpackSpecificFile(File file, FILE *packPointer, char *
     fseek(packPointer, sizeof(int) + i * sizeof(file), SEEK_SET);
 }
 
+/**
+ * 主函数
+ * @param argc 参数个数
+ * @param argv
+ *      - 空     打包
+ *          eg: pack D:\\tf\\*.* D:\\pack.dat
+ *      - -l    显示包内文件
+ *          eg: pack -l D:\\pack.dat
+ *              pack -l3 D:\\pack.dat
+ *      - -u    解包
+ *          eg: pack -u D:\\pack.dat D:\\unpack\\
+ *              pack -u2 D:\\pack.dat D:\\unpack\\
+ * @return
+ */
 int main(int argc, _TCHAR *argv[]) {
-//    char *newBuffer;
-//    FILE *fp = fopen("D:/dest.png", "wb");
-//    auto *fm = new FileManager;
-//    fm->writeSingleFile("D:/f/mugetwo.jpg", fp);
+    char digits[1000];
+    int i, j, realDigits;
+    auto *packManager = new PackManager;
+    // 对参数进行判断，进入不同的函数
+    if (argv[1][0] != '-') {
+        // 先读取文件信息
+        printf("源文件目录为：%s", argv[1]);
+        printf("包的目录为：%s\n", argv[2]);
+        packManager->packFiles(argv[1], argv[2]);
+    } else {
+        // 如果参数是l，则显示包内的文件
+        if (argv[1][1] == 'l') {
+            if (argv[1][2] == '\0') {
+                packManager->showFile(argv[2]);
+            } else {
+                i = 0;
+                j = 0;
+                while (argv[1][i] != '\0') {
+                    if (argv[1][i] >= '0' && argv[1][i] <= '9') {
+                        digits[j] = argv[1][i];
+                        ++j;
+                    }
+                    ++i;
+                }
+                realDigits = atoi(digits);
+                packManager->showFile(argv[2], realDigits);
+            }
+        } else if (argv[1][1] == 'u') {
+            if (argv[1][2] == '\0') {
+                packManager->unpackFiles(argv[2], argv[3]);
+            } else {
+                i = 0;
+                j = 0;
+                while (argv[1][i] != '\0') {
+                    if (argv[1][i] >= '0' && argv[1][i] <= '9') {
+                        digits[j] = argv[1][i];
+                        ++j;
+                    }
+                    ++i;
+                }
+                realDigits = atoi(digits);
+                packManager->unpackFiles(argv[2], argv[3], realDigits);
+            }
+        } else {
+            printf("参数输入错误，程序即将退出！\n");
+            system("exit");
+        }
+    }
 
-//    fm->readFile("D:/tf/22niang.jpg");
-//    newBuffer = fm->getFileBuf();
-//    cout << "Aaaaaaaa" << newBuffer << endl;
-
-//    auto *fileList = new FileList("D:\\tf\\*.*");
-//    int cnt = fileList->getFileNum();
-//    for (int i = 0; i < cnt; ++i) {
-//        cout << (*fileList)[i] << endl;
-//    }
-
-
-//    测试：将文件结构体的信息写入包中
-//    File file;
-//    auto *im = new IndexManager;
-//    im->initFp("D:\\aa.aaa");
-//    im->initFileListClass("D:\\f\\*.*");
-//    auto *fl = im->getFileList();
-//    fl->initFileList();
-//    Node *r = fl->getLinkFile()->next;
-//    while (r->next != nullptr) {
-//        file = im->createIndexBlock(r);
-//        im->writeIndex(file);
-//        r = r->next;
-//    }
-
-
-//    for (int i = 0; i < fl->getFileNum(); ++i) {
-//        cout << (*fl)[i] << endl;
-//    }
-//    im->initFp("D:\\aa.aaa");
-
-//----------------------------------------
-//    FILE *fp = fopen("D://aa.aaa", "rb");
-//    File tempFile;
-//    fread(&tempFile, sizeof(tempFile), 1, fp);
-//    printf("name: %s\t\tsize:%lu\t\t%s", tempFile.fileName, tempFile.size, ctime(&tempFile.time_create));
-//    return 0;
-
-    auto *pm = new PackManager;
-    pm->packFiles("D://aaa/*.txt", "D:/pack.dat");
-//    pm->packFiles("D:/f/*.*", "D:/dest.png");
-//    pm->showFile("D:/pack.dat");
-//    pm->showFile("D:/pack.dat", 1);
-//    pm->unpackFiles("D:/pack.dat", "E:/aaa/");
-    pm->unpackFiles("D:/pack.dat", "E:/aaa/", 3);
-//    pm->unpackFiles("D:/pack.data", "E:/aaa/");
     return 0;
 }

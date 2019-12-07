@@ -1,0 +1,30 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+D:/PackFileCpp/main.cpp
+iostream
+-
+cstdio
+-
+cstring
+-
+cstdlib
+-
+io.h
+-
+malloc.h
+-
+ctime
+-
+typeinfo
+-
+direct.h
+-
+fstream
+-
+

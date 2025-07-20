@@ -13,14 +13,16 @@
 using namespace std;
 
 // 链表
-typedef struct Node {
+typedef struct Node
+{
     _finddata_t fileInfo;
     char filePath[1000];
     Node *next;
 } Node, *LinkFile;
 
 // 文件类型的结构体
-struct File {
+struct File
+{
     // 文件名称
     char fileName[30];
     // 文件长度
@@ -33,14 +35,15 @@ struct File {
     __time64_t time_create;
 };
 
-
 /**
  * 与单个文件操作相关的类
  */
-class FileManager {
+class FileManager
+{
 private:
     char *fileBuf;
     long size;
+
 public:
     // 将文件中的内容读取到缓冲区
     void readFile(char *fn);
@@ -51,7 +54,8 @@ public:
     char *getFileBuf() const;
 };
 
-void FileManager::readFile(char *fn) {
+void FileManager::readFile(char *fn)
+{
     cout << "当前正在写的文件：" << fn << endl;
     filebuf *pbuf;
     ifstream filestr;
@@ -78,11 +82,13 @@ void FileManager::readFile(char *fn) {
     delete[] fileBuf;
 }
 
-char *FileManager::getFileBuf() const {
+char *FileManager::getFileBuf() const
+{
     return fileBuf;
 }
 
-void FileManager::writeSingleFile(Node *r, FILE *packPointer) {
+void FileManager::writeSingleFile(Node *r, FILE *packPointer)
+{
     FILE *filePointer = fopen(r->filePath, "rb");
     // fileBuf = (char *) malloc(r->fileInfo.size);
     fileBuf = new char[r->fileInfo.size];
@@ -93,12 +99,14 @@ void FileManager::writeSingleFile(Node *r, FILE *packPointer) {
 /**
  * 与文件链表操作相关的类
  */
-class FileList {
+class FileList
+{
 private:
     LinkFile linkFile{};
     int fileNum = 0;
     char nameList[1000][1000] = {};
     char filePath[1000]{};
+
 public:
     // 【强制】构造方法里面禁止加入任何业务逻辑，如果有初始化逻辑，请放在 init 方法中。
     explicit FileList(char *filePath);
@@ -115,16 +123,19 @@ public:
     int getFileNum() const;
 
     // 返回第no个文件名
-    char *operator[](int no) {
+    char *operator[](int no)
+    {
         return this->nameList[no];
     }
 };
 
-FileList::FileList(char *filePath) {
+FileList::FileList(char *filePath)
+{
     strcpy(this->filePath, filePath);
 }
 
-void FileList::insertNode(Node **r, struct _finddata_t fileInfo, char *filePath) {
+void FileList::insertNode(Node **r, struct _finddata_t fileInfo, char *filePath)
+{
     cout << "目前正在插入结点的文件：" << fileInfo.name << endl;
     Node *s = new Node;
     s->fileInfo = fileInfo;
@@ -139,11 +150,13 @@ void FileList::insertNode(Node **r, struct _finddata_t fileInfo, char *filePath)
     *r = s;
 }
 
-int FileList::getFileNum() const {
+int FileList::getFileNum() const
+{
     return fileNum;
 }
 
-void FileList::initFileList() {
+void FileList::initFileList()
+{
     // 用于查找的句柄
     long handle;
     // struct _finddata_t是用来存储文件各种信息的结构体
@@ -152,22 +165,29 @@ void FileList::initFileList() {
     auto r = linkFile;
     linkFile->next = nullptr;
 
-    if (!linkFile) {
+    if (!linkFile)
+    {
         printf("创建失败");
     }
     // 第一次查找
     handle = _findfirst(filePath, &fileInfo);
-    if (-1L == handle) {
+    if (-1L == handle)
+    {
         printf("文件路径出错");
-    } else {
+    }
+    else
+    {
         // 下面一个if千万不能删除，不然如果搜索特定后缀名的文件无法把搜索到的第一个文件加入到结点，这是第一次搜索
-        if (strcmp(fileInfo.name, ".") != 0 && strcmp(fileInfo.name, "..") != 0) {
+        if (strcmp(fileInfo.name, ".") != 0 && strcmp(fileInfo.name, "..") != 0)
+        {
             insertNode(&r, fileInfo, filePath);
             strcpy(nameList[fileNum], fileInfo.name);
             ++fileNum;
         }
-        while (!_findnext(handle, &fileInfo)) {
-            if (strcmp(fileInfo.name, ".") != 0 && strcmp(fileInfo.name, "..") != 0) {
+        while (!_findnext(handle, &fileInfo))
+        {
+            if (strcmp(fileInfo.name, ".") != 0 && strcmp(fileInfo.name, "..") != 0)
+            {
                 insertNode(&r, fileInfo, filePath);
                 strcpy(nameList[fileNum], fileInfo.name);
                 ++fileNum;
@@ -178,22 +198,26 @@ void FileList::initFileList() {
     _findclose(handle);
 }
 
-const Node *FileList::getLinkFile() const {
+const Node *FileList::getLinkFile() const
+{
     return linkFile;
 }
 
 /**
  * 有一个索引块，该块中有若干的索引项。
  */
-class IndexManager {
+class IndexManager
+{
 private:
     FileList *fileList;
-    // 包  
+    // 包
     FILE *fp;
     char *packPath;
     File file{};
+
 public:
     static int count;
+
 public:
     // 初始化写入文件指针
     void initFp(char *packPath);
@@ -213,24 +237,29 @@ public:
 
 int IndexManager::count = 0;
 
-void IndexManager::initFp(char *packPath) {
+void IndexManager::initFp(char *packPath)
+{
     this->packPath = packPath;
     this->fp = fopen(this->packPath, "wb");
 }
 
-FileList *IndexManager::initFileListClass(char *filePath) {
+FileList *IndexManager::initFileListClass(char *filePath)
+{
     fileList = new FileList(filePath);
     return fileList;
 }
 
-int IndexManager::initOffset() {
+int IndexManager::initOffset()
+{
     int initialOffset = sizeof(fileList->getFileNum()) + fileList->getFileNum() * sizeof(File);
     cout << "initialOffset为：" << initialOffset << endl;
     return initialOffset;
 }
 
-void IndexManager::writeIndexBlock(Node *r, FILE *packPointer) {
-    if (count == 0) {
+void IndexManager::writeIndexBlock(Node *r, FILE *packPointer)
+{
+    if (count == 0)
+    {
         file.fileOffset = initOffset();
     }
     cout << "当前count为：" << count << endl;
@@ -245,11 +274,13 @@ void IndexManager::writeIndexBlock(Node *r, FILE *packPointer) {
     printf("已写入%s信息\n", file.fileName);
 }
 
-FILE *IndexManager::getFp() const {
+FILE *IndexManager::getFp() const
+{
     return fp;
 }
 
-class PackManager {
+class PackManager
+{
 private:
     // 【推荐】谨慎使用继承的方式来进行扩展，优先使用聚合/组合的方式来实现。
     FileManager *fileManager;
@@ -259,6 +290,7 @@ private:
     int fileNum;
     char *fileBuf;
     FILE *fp;
+
 public:
     PackManager();
 
@@ -284,11 +316,13 @@ public:
     void createFolder(char *folderName);
 };
 
-PackManager::PackManager() {
+PackManager::PackManager()
+{
     indexManager = new IndexManager;
 }
 
-void PackManager::packFiles(char *filePath, char *packPath) {
+void PackManager::packFiles(char *filePath, char *packPath)
+{
     // 0. 初始化
     fileList = indexManager->initFileListClass(filePath);
     indexManager->initFp(packPath);
@@ -303,7 +337,8 @@ void PackManager::packFiles(char *filePath, char *packPath) {
     // 2. 写入结构体信息
     linkFile = fileList->getLinkFile()->next;
     Node *r = linkFile;
-    while (r != nullptr) {
+    while (r != nullptr)
+    {
         indexManager->writeIndexBlock(r, this->fp);
         r = r->next;
     }
@@ -312,22 +347,24 @@ void PackManager::packFiles(char *filePath, char *packPath) {
     // 重新指向头
     r = fileList->getLinkFile()->next;
     // 不能是r->next != nullptr，不然最后一个文件读不到！
-    while (r != nullptr) {
+    while (r != nullptr)
+    {
         fileManager->writeSingleFile(r, this->fp);
         r = r->next;
     }
     fclose(fp);
 }
 
-
-void PackManager::showFile(char *packPath) {
+void PackManager::showFile(char *packPath)
+{
     File file;
     fp = fopen(packPath, "rb");
     fread(&fileNum, sizeof(fileNum), 1, fp);
     cout << "可以读到文件个数：" << this->fileNum << endl;
     fseek(fp, sizeof(fileNum), SEEK_SET);
     printf("===============================================================================\n");
-    for (int i = 0; i < fileNum; ++i) {
+    for (int i = 0; i < fileNum; ++i)
+    {
         fread(&file, sizeof(file), 1, fp);
         printf("%s\t\t%lu\t\t%s", file.fileName, file.size, ctime(&file.time_create));
     }
@@ -335,7 +372,8 @@ void PackManager::showFile(char *packPath) {
     printf("\t\t\t\t\t\t文件个数：%d\n", fileNum);
 }
 
-void PackManager::showFile(char *packPath, int index) {
+void PackManager::showFile(char *packPath, int index)
+{
     File file;
     int count = 0;
     fp = fopen(packPath, "rb");
@@ -343,8 +381,10 @@ void PackManager::showFile(char *packPath, int index) {
     cout << "可以读到文件个数：" << this->fileNum << endl;
     fseek(fp, sizeof(fileNum), SEEK_SET);
     printf("===============================================================================\n");
-    for (int i = 0; i < fileNum; ++i) {
-        if (count == index) {
+    for (int i = 0; i < fileNum; ++i)
+    {
+        if (count == index)
+        {
             getchar();
             count = 0;
         }
@@ -356,7 +396,8 @@ void PackManager::showFile(char *packPath, int index) {
     printf("\t\t\t\t\t\t文件个数：%d\n", fileNum);
 }
 
-void PackManager::unpackFiles(char *packPath, char *unpackPath) {
+void PackManager::unpackFiles(char *packPath, char *unpackPath)
+{
     int i = 1, fileNumFromPack;
     // 包指针
     FILE *pIobuf, *fq;
@@ -368,34 +409,42 @@ void PackManager::unpackFiles(char *packPath, char *unpackPath) {
 
     // 打开包
     pIobuf = fopen(packPath, "rb");
-    if (!pIobuf) {
+    if (!pIobuf)
+    {
         printf("包打开失败");
     }
     fread(&fileNumFromPack, sizeof(int), 1, pIobuf);
     cout << "可以读到文件个数：" << fileNumFromPack << endl;
-    while (i <= fileNumFromPack) {
+    while (i <= fileNumFromPack)
+    {
         this->unpackSpecificFile(file, pIobuf, unpackPath, i);
         ++i;
     }
 }
 
-void PackManager::unpackFiles(char *packPath, char *unpackPath, int index) {
+void PackManager::unpackFiles(char *packPath, char *unpackPath, int index)
+{
     int i = 0, fileNumFromPack;
     FILE *pIobuf, *fq;
     File file;
 
     createFolder(unpackPath);
     pIobuf = fopen(packPath, "rb");
-    if (!pIobuf) {
+    if (!pIobuf)
+    {
         printf("包打开失败");
     }
     fread(&fileNumFromPack, sizeof(int), 1, pIobuf);
-    while (i <= fileNumFromPack) {
+    while (i <= fileNumFromPack)
+    {
         // int compareResult = strcmp((*fileList)[i], file.fileName);
-        if (i == index) {
+        if (i == index)
+        {
             this->unpackSpecificFile(file, pIobuf, unpackPath, i);
             ++i;
-        } else {
+        }
+        else
+        {
             // 移到下一个写进去的结构体处
             fseek(pIobuf, sizeof(fileNum) + i * sizeof(file), SEEK_SET);
             ++i;
@@ -403,13 +452,16 @@ void PackManager::unpackFiles(char *packPath, char *unpackPath, int index) {
     }
 }
 
-void PackManager::createFolder(char *folderName) {
-    if (_access(folderName, 0) == -1) {
+void PackManager::createFolder(char *folderName)
+{
+    if (_access(folderName, 0) == -1)
+    {
         _mkdir(folderName);
     }
 }
 
-inline void PackManager::unpackSpecificFile(File file, FILE *packPointer, char *unpackPath, int i) {
+inline void PackManager::unpackSpecificFile(File file, FILE *packPointer, char *unpackPath, int i)
+{
     // 读出一段结构体
     fread(&file, sizeof(File), 1, packPointer);
     // 拼接出解包的路径
@@ -417,7 +469,7 @@ inline void PackManager::unpackSpecificFile(File file, FILE *packPointer, char *
     strcat(file.filePath, file.fileName);
     // 在新路径新建文件
     FILE *fq = fopen(file.filePath, "wb");
-    char *buffer = (char *) malloc(file.size);
+    char *buffer = (char *)malloc(file.size);
     // 移到偏移处
     fseek(packPointer, file.fileOffset, SEEK_SET);
     fread(buffer, file.size, 1, packPointer);
@@ -441,26 +493,36 @@ inline void PackManager::unpackSpecificFile(File file, FILE *packPointer, char *
  *              pack -u2 D:\\pack.dat D:\\unpack\\
  * @return
  */
-int main(int argc, _TCHAR *argv[]) {
+int main(int argc, _TCHAR *argv[])
+{
     char digits[1000];
     int i, j, realDigits;
     auto *packManager = new PackManager;
     // 对参数进行判断，进入不同的函数
-    if (argv[1][0] != '-') {
+    if (argv[1][0] != '-')
+    {
         // 先读取文件信息
         printf("源文件目录为：%s", argv[1]);
         printf("包的目录为：%s\n", argv[2]);
         packManager->packFiles(argv[1], argv[2]);
-    } else {
+    }
+    else
+    {
         // 如果参数是l，则显示包内的文件
-        if (argv[1][1] == 'l') {
-            if (argv[1][2] == '\0') {
+        if (argv[1][1] == 'l')
+        {
+            if (argv[1][2] == '\0')
+            {
                 packManager->showFile(argv[2]);
-            } else {
+            }
+            else
+            {
                 i = 0;
                 j = 0;
-                while (argv[1][i] != '\0') {
-                    if (argv[1][i] >= '0' && argv[1][i] <= '9') {
+                while (argv[1][i] != '\0')
+                {
+                    if (argv[1][i] >= '0' && argv[1][i] <= '9')
+                    {
                         digits[j] = argv[1][i];
                         ++j;
                     }
@@ -469,14 +531,21 @@ int main(int argc, _TCHAR *argv[]) {
                 realDigits = atoi(digits);
                 packManager->showFile(argv[2], realDigits);
             }
-        } else if (argv[1][1] == 'u') {
-            if (argv[1][2] == '\0') {
+        }
+        else if (argv[1][1] == 'u')
+        {
+            if (argv[1][2] == '\0')
+            {
                 packManager->unpackFiles(argv[2], argv[3]);
-            } else {
+            }
+            else
+            {
                 i = 0;
                 j = 0;
-                while (argv[1][i] != '\0') {
-                    if (argv[1][i] >= '0' && argv[1][i] <= '9') {
+                while (argv[1][i] != '\0')
+                {
+                    if (argv[1][i] >= '0' && argv[1][i] <= '9')
+                    {
                         digits[j] = argv[1][i];
                         ++j;
                     }
@@ -485,7 +554,9 @@ int main(int argc, _TCHAR *argv[]) {
                 realDigits = atoi(digits);
                 packManager->unpackFiles(argv[2], argv[3], realDigits);
             }
-        } else {
+        }
+        else
+        {
             printf("参数输入错误，程序即将退出！\n");
             system("exit");
         }
